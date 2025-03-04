@@ -10,7 +10,7 @@ mccabe==0.7.0
 mixer==7.2.2
 packaging==23.0
 pep8-naming==0.13.3
-Pillow==9.3.0
+Pillow==11.1.0
 pluggy==1.0.0
 py==1.11.0
 pycodestyle==2.9.1
