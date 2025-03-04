@@ -1,5 +1,4 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django import forms
 from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, FormView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,15 +6,14 @@ from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
-from django.core.exceptions import PermissionDenied
-from .models import Post, Category, User, Comment
-from .constance import COUNT_POSTS
+from .models import Post, Category, Comment
+from .constance import PAGINATE_COUNT
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponseRedirect
-from django.contrib.auth import get_user
 from django.http import Http404
 from django.http import HttpResponseForbidden
+
 
 def update_comment_count(post):
     post.comment_count = post.comments.count()
@@ -179,7 +177,7 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 class PublishedPostsView(LoginRequiredMixin, ListView):
     model = Post
     template_name = 'blog/index.html'
-    paginate_by = 10
+    paginate_by = PAGINATE_COUNT
 
     def get_queryset(self):
         return Post.objects.filter(
@@ -237,7 +235,7 @@ class CategoryDetailView(LoginRequiredMixin, DetailView):
     model = Category
     template_name = 'blog/category.html'
     context_object_name = 'category'
-    paginate_by = 10
+    paginate_by = PAGINATE_COUNT
 
     def get_object(self, queryset=None):
         category = super().get_object(queryset)
@@ -258,7 +256,7 @@ class CategoryDetailView(LoginRequiredMixin, DetailView):
             pub_date__lte=now  # Добавлено условие для фильтрации по времени
         ).order_by('-pub_date')
 
-        paginator = Paginator(posts, 10)  # 10 постов на страницу
+        paginator = Paginator(posts, PAGINATE_COUNT)  # 10 постов на страницу
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)  # Получаем объекты для текущей страницы
         context['page_obj'] = page_obj  # Теперь это будет обрабатывать пагинацию корректно

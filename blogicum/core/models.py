@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 from blog.constance import TITLE_LENGTH
 
@@ -25,3 +26,19 @@ class TitleModel(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AuthorModel(models.Model):
+    """Абстрактная модель. Добавляет Author."""
+
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.author

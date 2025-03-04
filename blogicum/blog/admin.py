@@ -20,13 +20,3 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ('name',)
-
-
-# @admin.register(Profile)
-# class ProfileAdmin(admin.ModelAdmin):
-#     list_display = (
-#             'username',
-#             'first_name',
-#             'last_name',
-#             'email'
-#             )

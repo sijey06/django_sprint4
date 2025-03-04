@@ -1,14 +1,6 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
-from core.models import PublishedModel, TitleModel
-from .constance import TITLE_LENGTH, SLUG_LENGTH
-from django.contrib.auth import get_user_model
-
-# class Profile(AbstractUser):
-#     def __str__(self):
-#         return self.username
-
-User = get_user_model()
+from core.models import PublishedModel, TitleModel, AuthorModel
+from .constance import TITLE_LENGTH, SLUG_LENGTH, COMM_DEFAULT, TEXT_LENGTH
 
 
 class Category(PublishedModel, TitleModel):
@@ -37,18 +29,12 @@ class Location(PublishedModel):
         return self.name
 
 
-class Post(PublishedModel, TitleModel):
+class Post(PublishedModel, TitleModel, AuthorModel):
     text = models.TextField('Текст')
     pub_date = models.DateTimeField(
         'Дата и время публикации',
         help_text=('Если установить дату и время '
                    'в будущем — можно делать отложенные публикации.'))
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='posts',
-        verbose_name='Автор публикации'
-    )
     image = models.ImageField(
         'Изображение', upload_to='post_images', blank=True
         )
@@ -66,7 +52,7 @@ class Post(PublishedModel, TitleModel):
         blank=False,
         verbose_name='Категория'
     )
-    comment_count = models.PositiveIntegerField(default=0,)
+    comment_count = models.PositiveIntegerField(default=COMM_DEFAULT,)
 
     class Meta:
         verbose_name = 'публикация'
@@ -77,16 +63,15 @@ class Post(PublishedModel, TitleModel):
         return self.title
 
 
-class Comment(models.Model):
-    text = models.TextField('Комментарий', max_length=100,)
+class Comment(AuthorModel):
+    text = models.TextField('Текст комментария', max_length=TEXT_LENGTH,)
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        verbose_name='Автор комментария',
+        verbose_name='Комментарий',
         related_name='comments',
     )
-    created_at = models.DateTimeField('Дата создания', auto_now_add=True,)
-    author = models.ForeignKey(User, on_delete=models.CASCADE,)
+    created_at = models.DateTimeField('Создано', auto_now_add=True,)
 
     class Meta:
         ordering = ('created_at',)
