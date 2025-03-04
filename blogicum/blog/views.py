@@ -1,18 +1,23 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+    FormView,
+    UpdateView,
+    DeleteView
+    )
+from django.core.paginator import Paginator
+from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from django.views.generic import ListView, DetailView, CreateView, FormView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy, reverse
-from django.core.paginator import Paginator
-from django.contrib.auth.models import User
+
+from .constance import PAGINATE_COUNT
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
 from .models import Post, Category, Comment
-from .constance import PAGINATE_COUNT
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import UserPassesTestMixin
-from django.http import HttpResponseRedirect
-from django.http import Http404
-from django.http import HttpResponseForbidden
 
 
 def update_comment_count(post):
@@ -68,26 +73,13 @@ def delete_comment(request, post_id, comment_id):
     return render(request, template, context)
 
 
-class OnlyAuthorMixin(UserPassesTestMixin):
-
-    def test_func(self):
-        self.object = self.get_object()
-        return (
-            self.request.user.is_authenticated
-            and self.object.author == self.request.user)
-
-    def handle_no_permission(self):
-        post = self.get_object()
-        return HttpResponseRedirect(reverse('blog:post_detail', kwargs={'pk': post.pk}))
-
-
 class RegistrationView(FormView):
     template_name = 'registration/registration_form.html'
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('blog:index')
 
     def form_valid(self, form):
-        user = form.save()
+        form.save()
         return super().form_valid(form)
 
 
@@ -102,10 +94,9 @@ class ProfileDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Измените фильтрацию, чтобы включить все посты автора, а не только опубликованные
         user_posts = Post.objects.filter(author=self.object).order_by('-pub_date')
 
-        paginator = Paginator(user_posts, 10)  # Измените количество постов на страницу, если требуется
+        paginator = Paginator(user_posts, PAGINATE_COUNT)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -198,7 +189,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
         if not post.is_published:
             if self.request.user != post.author:
-                raise Http404("Пост недоступен.")
+                raise Http404('Пост недоступен.')
         return post
 
     def get_context_data(self, **kwargs):
@@ -240,7 +231,7 @@ class CategoryDetailView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         category = super().get_object(queryset)
         if not category.is_published:
-            raise Http404("Категория недоступна.")
+            raise Http404('Категория недоступна.')
         return category
 
     def get_context_data(self, **kwargs):
