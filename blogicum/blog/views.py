@@ -59,7 +59,7 @@ def edit_comment(request, post_id, comment_id):
 def delete_comment(request, post_id, comment_id):
     """Удаляет комментарий."""
     comment = get_comment_and_check_permission(request, comment_id)
-    post = get_post(post_id)
+    get_post(post_id)
 
     if request.method == "POST":
         comment.delete()

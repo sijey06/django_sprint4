@@ -1,7 +1,7 @@
 from django.db import models
 
 from core.models import PublishedModel, TitleModel, AuthorModel
-from .constance import TITLE_LENGTH, SLUG_LENGTH, COMM_DEFAULT, TEXT_LENGTH
+from .constance import TITLE_LENGTH, SLUG_LENGTH, TEXT_LENGTH
 
 
 class Category(PublishedModel, TitleModel):
