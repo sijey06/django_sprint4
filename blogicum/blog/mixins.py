@@ -1,6 +1,9 @@
-from .models import Post
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponseForbidden
+
+from .constance import PAGINATE_COUNT
+from .models import Post
 
 
 class PostCheckMixin:
@@ -29,3 +32,10 @@ class PostCheckMixin:
 class PostMixin:
     """Mixin для модели Post."""
     model = Post
+
+
+def paginate_queryset(queryset, request):
+    """Функция для пагинации переданного queryset."""
+    paginator = Paginator(queryset, PAGINATE_COUNT)
+    page_number = request.GET.get('page')
+    return paginator.get_page(page_number)

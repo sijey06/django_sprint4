@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.paginator import Paginator
 from django.views.generic import (
     ListView,
     DetailView,
@@ -23,7 +22,7 @@ from .check_comments import (
     get_post
     )
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
-from .mixins import PostCheckMixin, PostMixin
+from .mixins import PostCheckMixin, PostMixin, paginate_queryset
 from .models import Post, Category
 
 
@@ -72,6 +71,7 @@ def delete_comment(request, post_id, comment_id):
 
 
 class RegistrationView(FormView):
+    """Отображение страницы регистрации."""
     template_name = 'registration/registration_form.html'
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('blog:index')
@@ -82,11 +82,12 @@ class RegistrationView(FormView):
 
 
 class ProfileDetailView(DetailView):
+    """Отображение страницы профиля."""
     model = User
     template_name = 'blog/profile.html'
     context_object_name = 'profile'
 
-    def get_object(self,  queryset=None):
+    def get_object(self, queryset=None):
         username = self.kwargs.get('username')
         return get_object_or_404(User, username=username)
 
@@ -95,16 +96,12 @@ class ProfileDetailView(DetailView):
         user_posts = Post.objects.filter(
             author=self.object
             ).order_by('-pub_date')
-
-        paginator = Paginator(user_posts, PAGINATE_COUNT)
-        page_number = self.request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-
-        context['page_obj'] = page_obj
+        context['page_obj'] = paginate_queryset(user_posts, self.request)
         return context
 
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
+    """Отображение страницы редактирования профиля."""
     model = User
     template_name = 'blog/user.html'
     form_class = ProfileForm
@@ -115,6 +112,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
 
 
 class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
+    """Отображение страницы создания поста."""
     template_name = 'blog/create.html'
     form_class = PostForm
 
@@ -129,6 +127,7 @@ class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
 
 class PostUpdateView(LoginRequiredMixin, PostMixin,
                      PostCheckMixin, UpdateView):
+    """Отображение страницы редактирования поста."""
     form_class = PostForm
 
     def get_success_url(self):
@@ -140,12 +139,14 @@ class PostUpdateView(LoginRequiredMixin, PostMixin,
 
 class PostDeleteView(LoginRequiredMixin, PostMixin,
                      PostCheckMixin, DeleteView):
+    """Страница удаления поста."""
 
     def get_success_url(self):
         return reverse('blog:index')
 
 
 class PublishedPostsView(LoginRequiredMixin, PostMixin, ListView):
+    """Отображает главную страницу с постами."""
     template_name = 'blog/index.html'
     paginate_by = PAGINATE_COUNT
 
@@ -158,6 +159,7 @@ class PublishedPostsView(LoginRequiredMixin, PostMixin, ListView):
 
 
 class PostDetailView(LoginRequiredMixin, PostMixin, DetailView):
+    """Отображает страницу поста."""
     template_name = 'blog/detail.html'
     context_object_name = 'post'
 
@@ -182,6 +184,7 @@ class PostDetailView(LoginRequiredMixin, PostMixin, DetailView):
 
 
 class CategoryListView(LoginRequiredMixin, ListView):
+    """Список категорий."""
     model = Category
     template_name = 'blog/category.html'
     context_object_name = 'categories'
@@ -201,10 +204,10 @@ class CategoryListView(LoginRequiredMixin, ListView):
 
 
 class CategoryDetailView(LoginRequiredMixin, DetailView):
+    """Отображает страницу с постами выбранной категории."""
     model = Category
     template_name = 'blog/category.html'
     context_object_name = 'category'
-    paginate_by = PAGINATE_COUNT
 
     def get_object(self, queryset=None):
         category = super().get_object(queryset)
@@ -220,9 +223,5 @@ class CategoryDetailView(LoginRequiredMixin, DetailView):
             is_published=True,
             pub_date__lte=now
         ).order_by('-pub_date')
-
-        paginator = Paginator(posts, PAGINATE_COUNT)
-        page_number = self.request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        context['page_obj'] = page_obj
+        context['page_obj'] = paginate_queryset(posts, self.request)
         return context
