@@ -19,9 +19,11 @@ def error500(request, *args, **kwargs):
 
 class About(TemplateView):
     """Отображает страницу "О проекте"."""
+
     template_name = 'pages/about.html'
 
 
 class Rules(TemplateView):
     """Отображает страницу "Наши правила"."""
+
     template_name = 'pages/rules.html'

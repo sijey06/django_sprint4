@@ -8,7 +8,7 @@ from django.views.generic import (
     FormView,
     UpdateView,
     DeleteView
-    )
+)
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -20,7 +20,7 @@ from .check_comments import (
     get_comment_and_check_permission,
     render_comment_template,
     get_post
-    )
+)
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
 from .mixins import PostCheckMixin, PostMixin, paginate_queryset
 from .models import Post, Category
@@ -97,7 +97,7 @@ class ProfileDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         user_posts = Post.objects.filter(
             author=self.object
-            ).order_by('-pub_date')
+        ).order_by('-pub_date')
         context['page_obj'] = paginate_queryset(user_posts, self.request)
         return context
 
@@ -139,7 +139,7 @@ class PostUpdateView(LoginRequiredMixin, PostMixin,
         return reverse(
             'blog:post_detail',
             kwargs={'post_id': self.kwargs[self.pk_url_kwarg]}
-            )
+        )
 
 
 class PostDeleteView(LoginRequiredMixin, PostMixin,
