@@ -9,14 +9,14 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
+from django.db.models import Count
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.urls import reverse_lazy, reverse
 
 from .constance import PAGINATE_COUNT
 from .check_comments import (
-    update_comment_count,
     get_comment_and_check_permission,
     render_comment_template,
     get_post
@@ -36,7 +36,6 @@ def add_comment(request, post_id):
         comment.post = post
         comment.author = request.user
         comment.save()
-        update_comment_count(post)
     return redirect('blog:post_detail', post_id)
 
 
@@ -64,10 +63,17 @@ def delete_comment(request, post_id, comment_id):
 
     if request.method == "POST":
         comment.delete()
-        update_comment_count(post)
         return redirect('blog:post_detail', post_id)
 
     return render_comment_template(request, comment, None)
+
+
+@login_required
+def post_list(request):
+    """Список всех постов с количеством комментариев."""
+    posts = Post.objects.annotate(comment_count=Count('comments'))
+
+    return render(request, 'includes/post_card.html', {'posts': posts})
 
 
 class RegistrationView(FormView):
@@ -186,7 +192,7 @@ class PostDetailView(LoginRequiredMixin, PostMixin, DetailView):
         context['comments'] = (
             self.object.comments.select_related('author')
         )
-        context['comment_count'] = self.object.comment_count
+        context['comment_count'] = self.object.comments.count()
         return context
 
 

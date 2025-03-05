@@ -4,11 +4,6 @@ from django.shortcuts import render, get_object_or_404
 from .models import Post, Comment
 
 
-def update_comment_count(post):
-    post.comment_count = post.comments.count()
-    post.save()
-
-
 def get_comment_and_check_permission(request, comment_id):
     """Получает комментарий и проверяет разрешение пользователя."""
     comment = get_object_or_404(Comment, id=comment_id)

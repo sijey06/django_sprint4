@@ -1,4 +1,5 @@
 from django.db import models
+
 from core.models import PublishedModel, TitleModel, AuthorModel
 from .constance import TITLE_LENGTH, SLUG_LENGTH, COMM_DEFAULT, TEXT_LENGTH
 
@@ -40,6 +41,7 @@ class Post(PublishedModel, TitleModel, AuthorModel):
     )
     location = models.ForeignKey(
         Location,
+        related_name='posts',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -47,17 +49,21 @@ class Post(PublishedModel, TitleModel, AuthorModel):
     )
     category = models.ForeignKey(
         Category,
+        related_name='category_posts',
         on_delete=models.SET_NULL,
         null=True,
         blank=False,
         verbose_name='Категория'
     )
-    comment_count = models.PositiveIntegerField(default=COMM_DEFAULT,)
 
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         ordering = ('-pub_date',)
+
+    @property
+    def comment_count(self):
+        return self.comments.count()
 
     def __str__(self):
         return self.title
@@ -67,13 +73,13 @@ class Comment(AuthorModel):
     text = models.TextField('Текст комментария', max_length=TEXT_LENGTH,)
     post = models.ForeignKey(
         Post,
-        on_delete=models.CASCADE,
-        verbose_name='Комментарий',
         related_name='comments',
-    )
+        on_delete=models.CASCADE,)
     created_at = models.DateTimeField('Создано', auto_now_add=True,)
 
     class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
         ordering = ('created_at',)
 
     def __str__(self):
