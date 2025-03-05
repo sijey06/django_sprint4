@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.views.generic import (
     ListView,
     DetailView,
@@ -9,27 +10,27 @@ from django.views.generic import (
     UpdateView,
     DeleteView
     )
-from django.core.paginator import Paginator
 from django.http import Http404
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.urls import reverse_lazy, reverse
 
-from .mixins import PostPermissionMixin, PostMixin
 from .constance import PAGINATE_COUNT
+from .check_comments import (
+    update_comment_count,
+    get_comment_and_check_permission,
+    render_comment_template,
+    get_post
+    )
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
-from .models import Post, Category, Comment
-
-
-def update_comment_count(post):
-    post.comment_count = post.comments.count()
-    post.save()
+from .mixins import PostCheckMixin, PostMixin
+from .models import Post, Category
 
 
 @login_required
 def add_comment(request, post_id):
     """Добавляет комментарий к записи."""
-    post = get_object_or_404(Post, id=post_id)
+    post = get_post(post_id)
     form = CommentForm(request.POST or None)
     if form.is_valid():
         comment = form.save(commit=False)
@@ -43,35 +44,31 @@ def add_comment(request, post_id):
 @login_required
 def edit_comment(request, post_id, comment_id):
     """Редактирует комментарий."""
-    template = 'blog/comment.html'
-    comment = get_object_or_404(Comment, id=comment_id)
-    if request.user != comment.author:
-        return redirect('blog:post_detail', post_id)
+    comment = get_comment_and_check_permission(request, comment_id)
+
     if request.method == "POST":
-        form = CommentForm(request.POST or None, instance=comment)
+        form = CommentForm(request.POST, instance=comment)
         if form.is_valid():
             form.save()
             return redirect('blog:post_detail', post_id)
     else:
         form = CommentForm(instance=comment)
-    context = {'form': form, 'comment': comment}
-    return render(request, template, context)
+
+    return render_comment_template(request, comment, form)
 
 
 @login_required
 def delete_comment(request, post_id, comment_id):
     """Удаляет комментарий."""
-    template = 'blog/comment.html'
-    comment = get_object_or_404(Comment, id=comment_id)
-    post = get_object_or_404(Post, id=post_id)
-    if request.user != comment.author:
-        return redirect('blog:post_detail', post_id)
+    comment = get_comment_and_check_permission(request, comment_id)
+    post = get_post(post_id)
+
     if request.method == "POST":
         comment.delete()
         update_comment_count(post)
         return redirect('blog:post_detail', post_id)
-    context = {'comment': comment}
-    return render(request, template, context)
+
+    return render_comment_template(request, comment, None)
 
 
 class RegistrationView(FormView):
@@ -95,7 +92,9 @@ class ProfileDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_posts = Post.objects.filter(author=self.object).order_by('-pub_date')
+        user_posts = Post.objects.filter(
+            author=self.object
+            ).order_by('-pub_date')
 
         paginator = Paginator(user_posts, PAGINATE_COUNT)
         page_number = self.request.GET.get('page')
@@ -128,7 +127,8 @@ class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
         return reverse_lazy('blog:profile', kwargs={'username': username})
 
 
-class PostUpdateView(LoginRequiredMixin, PostMixin, PostPermissionMixin, UpdateView):
+class PostUpdateView(LoginRequiredMixin, PostMixin,
+                     PostCheckMixin, UpdateView):
     form_class = PostForm
 
     def get_success_url(self):
@@ -138,7 +138,8 @@ class PostUpdateView(LoginRequiredMixin, PostMixin, PostPermissionMixin, UpdateV
             )
 
 
-class PostDeleteView(LoginRequiredMixin, PostMixin, PostPermissionMixin, DeleteView):
+class PostDeleteView(LoginRequiredMixin, PostMixin,
+                     PostCheckMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('blog:index')
