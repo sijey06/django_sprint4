@@ -37,7 +37,7 @@ class Post(PublishedModel, TitleModel, AuthorModel):
                    'в будущем — можно делать отложенные публикации.'))
     image = models.ImageField(
         'Изображение', upload_to='post_images', blank=True
-        )
+    )
     location = models.ForeignKey(
         Location,
         on_delete=models.SET_NULL,

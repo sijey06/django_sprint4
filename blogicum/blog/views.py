@@ -72,6 +72,7 @@ def delete_comment(request, post_id, comment_id):
 
 class RegistrationView(FormView):
     """Отображение страницы регистрации."""
+
     template_name = 'registration/registration_form.html'
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('blog:index')
@@ -83,6 +84,7 @@ class RegistrationView(FormView):
 
 class ProfileDetailView(DetailView):
     """Отображение страницы профиля."""
+
     model = User
     template_name = 'blog/profile.html'
     context_object_name = 'profile'
@@ -102,6 +104,7 @@ class ProfileDetailView(DetailView):
 
 class EditProfileView(LoginRequiredMixin, UpdateView):
     """Отображение страницы редактирования профиля."""
+
     model = User
     template_name = 'blog/user.html'
     form_class = ProfileForm
@@ -113,6 +116,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
 
 class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
     """Отображение страницы создания поста."""
+
     template_name = 'blog/create.html'
     form_class = PostForm
 
@@ -128,6 +132,7 @@ class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
 class PostUpdateView(LoginRequiredMixin, PostMixin,
                      PostCheckMixin, UpdateView):
     """Отображение страницы редактирования поста."""
+
     form_class = PostForm
 
     def get_success_url(self):
@@ -147,6 +152,7 @@ class PostDeleteView(LoginRequiredMixin, PostMixin,
 
 class PublishedPostsView(LoginRequiredMixin, PostMixin, ListView):
     """Отображает главную страницу с постами."""
+
     template_name = 'blog/index.html'
     paginate_by = PAGINATE_COUNT
 
@@ -160,6 +166,7 @@ class PublishedPostsView(LoginRequiredMixin, PostMixin, ListView):
 
 class PostDetailView(LoginRequiredMixin, PostMixin, DetailView):
     """Отображает страницу поста."""
+
     template_name = 'blog/detail.html'
     context_object_name = 'post'
 
@@ -185,6 +192,7 @@ class PostDetailView(LoginRequiredMixin, PostMixin, DetailView):
 
 class CategoryListView(LoginRequiredMixin, ListView):
     """Список категорий."""
+
     model = Category
     template_name = 'blog/category.html'
     context_object_name = 'categories'
@@ -205,6 +213,7 @@ class CategoryListView(LoginRequiredMixin, ListView):
 
 class CategoryDetailView(LoginRequiredMixin, DetailView):
     """Отображает страницу с постами выбранной категории."""
+
     model = Category
     template_name = 'blog/category.html'
     context_object_name = 'category'

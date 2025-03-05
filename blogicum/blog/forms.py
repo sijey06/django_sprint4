@@ -14,7 +14,7 @@ class CustomUserCreationForm(UserCreationForm):
             'first_name',
             'last_name',
             'email',
-            )
+        )
 
 
 class ProfileForm(forms.ModelForm):
@@ -42,7 +42,7 @@ class PostForm(forms.ModelForm):
             'location',
             'category',
             'is_published'
-            )
+        )
         widgets = {
             'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'})
         }

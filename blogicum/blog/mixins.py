@@ -8,6 +8,7 @@ from .models import Post
 
 class PostCheckMixin:
     """Mixin для проверки прав доступа к посту."""
+
     pk_url_kwarg = 'post_id'
     template_name = 'blog/create.html'
 
@@ -31,6 +32,7 @@ class PostCheckMixin:
 
 class PostMixin:
     """Mixin для модели Post."""
+
     model = Post
 
 
