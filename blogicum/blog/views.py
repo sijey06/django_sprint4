@@ -10,11 +10,12 @@ from django.views.generic import (
     DeleteView
     )
 from django.core.paginator import Paginator
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.urls import reverse_lazy, reverse
 
+from .mixins import PostPermissionMixin, PostMixin
 from .constance import PAGINATE_COUNT
 from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
 from .models import Post, Category, Comment
@@ -114,8 +115,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
         return get_object_or_404(User, username=self.request.user.username)
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
-    model = Post
+class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
     template_name = 'blog/create.html'
     form_class = PostForm
 
@@ -128,45 +128,23 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('blog:profile', kwargs={'username': username})
 
 
-class PostUpdateView(LoginRequiredMixin, UpdateView):
-    model = Post
+class PostUpdateView(LoginRequiredMixin, PostMixin, PostPermissionMixin, UpdateView):
     form_class = PostForm
-    template_name = 'blog/create.html'
-    pk_url_kwarg = 'post_id'
-
-    def get_object(self):
-        post = super().get_object()
-        if not post.is_published:
-            if post.author != self.request.user:
-                return HttpResponseForbidden("У вас нет доступа")
-        return post
-
-    def dispatch(self, request, *args, **kwargs):
-        if self.get_object().author != request.user:
-            return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
-        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.kwargs['post_id']})
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.kwargs[self.pk_url_kwarg]}
+            )
 
 
-class PostDeleteView(LoginRequiredMixin, DeleteView):
-    model = Post
-    template_name = 'blog/create.html'
-    pk_url_kwarg = 'post_id'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.object = get_object_or_404(Post, pk=self.kwargs['post_id'])
-        if self.object.author != request.user:
-            return redirect('blog:post_detail', self.kwargs['post_id'])
-        return super().dispatch(request, *args, **kwargs)
+class PostDeleteView(LoginRequiredMixin, PostMixin, PostPermissionMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('blog:index')
 
 
-class PublishedPostsView(LoginRequiredMixin, ListView):
-    model = Post
+class PublishedPostsView(LoginRequiredMixin, PostMixin, ListView):
     template_name = 'blog/index.html'
     paginate_by = PAGINATE_COUNT
 
@@ -178,8 +156,7 @@ class PublishedPostsView(LoginRequiredMixin, ListView):
         )
 
 
-class PostDetailView(LoginRequiredMixin, DetailView):
-    model = Post
+class PostDetailView(LoginRequiredMixin, PostMixin, DetailView):
     template_name = 'blog/detail.html'
     context_object_name = 'post'
 
@@ -236,19 +213,15 @@ class CategoryDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # Получаем текущее время
         now = timezone.now()
-
-        # Фильтруем посты: опубликованные и с временем публикации в прошлом
         posts = Post.objects.filter(
             category=self.object,
             is_published=True,
-            pub_date__lte=now  # Добавлено условие для фильтрации по времени
+            pub_date__lte=now
         ).order_by('-pub_date')
 
-        paginator = Paginator(posts, PAGINATE_COUNT)  # 10 постов на страницу
+        paginator = Paginator(posts, PAGINATE_COUNT)
         page_number = self.request.GET.get('page')
-        page_obj = paginator.get_page(page_number)  # Получаем объекты для текущей страницы
-        context['page_obj'] = page_obj  # Теперь это будет обрабатывать пагинацию корректно
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
         return context
