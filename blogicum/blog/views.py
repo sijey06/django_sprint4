@@ -21,7 +21,7 @@ from .check_comments import (
     render_comment_template,
     get_post
 )
-from .forms import CustomUserCreationForm, ProfileForm, CommentForm, PostForm
+from .forms import RegisterForm, ProfileForm, CommentForm, PostForm
 from .mixins import PostCheckMixin, PostMixin, paginate_queryset
 from .models import Post, Category
 
@@ -80,7 +80,7 @@ class RegistrationView(FormView):
     """Отображение страницы регистрации."""
 
     template_name = 'registration/registration_form.html'
-    form_class = CustomUserCreationForm
+    form_class = RegisterForm
     success_url = reverse_lazy('blog:index')
 
     def form_valid(self, form):
