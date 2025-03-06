@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Comment, Post
 
 
-class CustomUserCreationForm(UserCreationForm):
+class RegisterForm(UserCreationForm):
 
     class Meta:
         model = User
