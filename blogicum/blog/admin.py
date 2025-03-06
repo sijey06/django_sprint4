@@ -14,7 +14,7 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ('author', 'category', 'location', 'pub_date')
     search_fields = ('title', 'text', 'author__username')
     ordering = ('-pub_date',)
-    inlines = (CommentInline)
+    inlines = (CommentInline,)
 
 
 @admin.register(Category)
